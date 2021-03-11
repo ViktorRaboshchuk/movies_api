@@ -2,7 +2,7 @@ from abc import ABC
 
 from rest_framework import serializers
 
-from movies.models import Movie, Review, Rating
+from movies.models import Movie, Review, Rating, Actor
 
 
 class FilterReviewListSerializer(serializers.ListSerializer):
@@ -21,12 +21,31 @@ class RecursiveSerializer(serializers.Serializer):
         return serializer.data
 
 
+class ActorListSerializer(serializers.ModelSerializer):
+    """list Actors and Directors"""
+
+    class Meta:
+        model = Actor
+        fields = ("id", "name", "image")
+
+
+class ActorDetailSerializer(serializers.ModelSerializer):
+    """details about Actors and Directors"""
+
+    class Meta:
+        model = Actor
+        fields = "__all__"
+
+
 class MovieSerializer(serializers.ModelSerializer):
     """Films list"""
 
+    rating_user = serializers.BooleanField()
+    middle_star = serializers.DecimalField(max_digits = 10, decimal_places=2)
+
     class Meta:
         model = Movie
-        fields = ('title', 'tagline', 'category')
+        fields = ('title', 'tagline', 'category', 'rating_user', 'middle_star')
 
 
 class CreateReviewsSerializer(serializers.ModelSerializer):
@@ -51,8 +70,8 @@ class MovieDetailSerializer(serializers.ModelSerializer):
     """Film details """
 
     category = serializers.SlugRelatedField(slug_field="name", read_only=True)
-    directors = serializers.SlugRelatedField(slug_field="name", many=True, read_only=True)
-    actors = serializers.SlugRelatedField(slug_field="name", many=True, read_only=True)
+    directors = ActorListSerializer(many=True, read_only=True)
+    actors = ActorListSerializer(many=True, read_only=True)
     genres = serializers.SlugRelatedField(slug_field="name", many=True, read_only=True)
     reviews = ReviewSerializer(many=True)
 
@@ -61,19 +80,19 @@ class MovieDetailSerializer(serializers.ModelSerializer):
         exclude = ("draft",)
 
 
-class CreateReviewsSerializer(serializers.ModelSerializer):
+class CreateRatingStarSerializer(serializers.ModelSerializer):
     """Add review"""
 
     class Meta:
-        model=Movie
-        exclude = ("star", "movie")
-
+        model = Rating
+        fields = ("star", "movie")
 
     def create(self, validated_data):
         rating = Rating.objects.update_or_create(
             ip=validated_data.get('ip', None),
             movie=validated_data.get('movie', None),
-            defaults={'star': validated_data.get('star')}
+            defaults={'star': validated_data.get("star")}
         )
 
         return rating
+
