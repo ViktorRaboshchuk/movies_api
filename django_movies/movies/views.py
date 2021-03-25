@@ -1,9 +1,8 @@
 from django.db import models
 from django.db.models import Avg
-from django.shortcuts import render
 from rest_framework import generics, permissions
-# Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.viewsets import ViewSet
 
 from movies.models import Movie, Review, Actor
 from movies.serializers import MovieSerializer, MovieDetailSerializer, CreateReviewsSerializer, \
